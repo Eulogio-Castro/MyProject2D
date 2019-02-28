@@ -7,17 +7,28 @@ using UnityEngine.SceneManagement;
 public class Player : MovingObject
 {
     public float restartLevelDelay = 1f;
+    public float attackDelay = 1f;
     public int pointsPerPotion = 30;
     public int scorePerKill = 50;
     public int destroyableDamage = 1;
     public AudioClip moveSound1;
     public AudioClip moveSound2;
+    public AudioClip attackSource;
     public Text healthText;
 
     private Animator animator;
+    private SpriteRenderer spriterenderer;
+    private Rigidbody2D rigid2D;
+    private BoxCollider2D bCollider;
+    private GameObject floor;
+    private Transform floorTransform;
     private int maxHealth;
     private int health;
     private int score;
+    private int vertical;
+    private int horizontal;
+    private bool isAttacking;
+    private string lastDir; //last direction travelled to give orientation to sprite
    
 
 
@@ -25,6 +36,10 @@ public class Player : MovingObject
     protected override void Start()
     {
         animator = GetComponent<Animator>();
+        spriterenderer = GetComponent<SpriteRenderer>();
+        rigid2D = GetComponentInParent<Rigidbody2D>();
+        floor = GameObject.Find("Floor Transform");
+        floorTransform = floor.transform;
 
         maxHealth = GameManager.instance.playerMaxHealth;
         health = GameManager.instance.playerHealth;
@@ -33,6 +48,7 @@ public class Player : MovingObject
         healthText.text = "Health: " + health;
 
         base.Start();
+        isAttacking = false;
 
     }
 
@@ -44,32 +60,44 @@ public class Player : MovingObject
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update()    {
         if (!GameManager.instance.playersTurn)
             return;
 
-        int horizontal = 0;
-        int vertical = 0;
+        GetAxes();
+            //AttemptMove<Destroyable>(horizontal, vertical); 
 
-        horizontal = (int)(Input.GetAxisRaw("Horizontal"));
-        vertical = (int)(Input.GetAxisRaw("Vertical"));
-        AttemptMove<Destroyable>(horizontal, vertical); 
-    }
+        if(horizontal!=0)
+            SoundManager.instance.RandomizeSfx(moveSound1, moveSound2);
 
+        if(rigid2D.velocity.magnitude < maxSpeed)
+            rigid2D.AddForce(new Vector3(Input.GetAxisRaw("Horizontal") * moveTime, 0));
 
-    protected override void AttemptMove<T>(int xDir, int yDir)
-    {
-        base.AttemptMove<T>(xDir,yDir);
-        RaycastHit2D hit;
-        if(Move(xDir, yDir, out hit))
+        if (horizontal !=0)
         {
-            SoundManager.instance.RandomizeSfx(moveSound1, moveSound2); 
+            if (horizontal < 0)
+                lastDir = "Left";
+            if (horizontal > 0)
+                lastDir = "Right";
+            animator.SetTrigger("PlayerWalk");
+            if (lastDir == "Left")
+                spriterenderer.flipX = true;
+            if (lastDir == "Right")
+                spriterenderer.flipX = false;
         }
 
-        GameManager.instance.playersTurn = false;
+        Jump();
 
+        bool attack = Input.GetButton("Jump");
+        
+        if ((attack) && (!isAttacking))
+        {
+            StartCoroutine(Attack(attack, attackDelay));
+        }
+       
     }
+    
+    
 
     protected override void OnCantMove <T> (T component)
     {
@@ -95,6 +123,49 @@ public class Player : MovingObject
         }
 
 
+    }
+
+   void GetAxes()
+    {
+        horizontal = 0;
+        vertical = 0;
+
+        horizontal = (int)(Input.GetAxisRaw("Horizontal"));
+        vertical = (int)Input.GetAxisRaw("Vertical");
+    }
+
+
+    void Jump()
+    {
+        Vector2 start = transform.position;
+        RaycastHit2D platformHit = Physics2D.Linecast(transform.position, floorTransform.position, platformLayer.value);
+        
+        if (vertical > 0 && platformHit.collider != null)
+        {
+
+            animator.SetTrigger("PlayerJump");
+            // Apply the force to the rigidbody.
+            rigid2D.AddForce(Vector2.up * liftForce);
+        }
+        
+    }
+
+    IEnumerator Attack(bool attack, float attackDelay)
+    {
+        if (attack)
+        {
+            isAttacking = true;
+            animator.SetTrigger("PlayerAttack");
+            SoundManager.instance.PlaySingle(attackSource);
+            yield return new WaitForEndOfFrame();
+            StartCoroutine(AttackingDelay(attackDelay));
+        }
+    }
+
+    IEnumerator AttackingDelay(float attackDelay)
+    {;
+        yield return new WaitForSecondsRealtime(attackDelay);
+        isAttacking = false;
     }
 
     IEnumerator NextLevel(string name, float delayTime)

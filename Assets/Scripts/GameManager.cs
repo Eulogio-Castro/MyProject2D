@@ -91,6 +91,7 @@ public class GameManager : MonoBehaviour
         if (playersTurn || doingSetup)
             return;
 
+        playersTurn = true;
         
     }
 }

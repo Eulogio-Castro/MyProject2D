@@ -70,7 +70,7 @@ public class Player : MovingObject
         if(horizontal!=0)
             SoundManager.instance.RandomizeSfx(moveSound1, moveSound2);
 
-        if(rigid2D.velocity.magnitude < maxSpeed)
+        if (rigid2D.velocity.magnitude < maxSpeed)
             rigid2D.AddForce(new Vector3(Input.GetAxisRaw("Horizontal") * moveTime, 0));
 
         if (horizontal !=0)
@@ -142,10 +142,12 @@ public class Player : MovingObject
         
         if (vertical > 0 && platformHit.collider != null)
         {
-
+            float distance = Mathf.Abs(platformHit.point.y - transform.position.y);
+            float heightError = floatHeight - distance;
+            float force = liftForce * heightError - rigid2D.velocity.y * damping;
             animator.SetTrigger("PlayerJump");
             // Apply the force to the rigidbody.
-            rigid2D.AddForce(Vector2.up * liftForce);
+            rigid2D.AddForce(Vector2.up * force);
         }
         
     }

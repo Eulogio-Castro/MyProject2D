@@ -8,9 +8,9 @@ public abstract class MovingObject : MonoBehaviour
     public float maxSpeed = 100f;
     public LayerMask blockingLayer;
     public LayerMask platformLayer;
-    public float floatHeight;     // Desired floating height.
+    public float floatHeight = 2.5f;     // Desired floating height.
     public float liftForce;       // Force to apply when lifting the rigidbody.
-    public float damping;         // Force reduction proportional to speed (reduces bouncing).
+    public float damping = 1;         // Force reduction proportional to speed (reduces bouncing).
 
 
 

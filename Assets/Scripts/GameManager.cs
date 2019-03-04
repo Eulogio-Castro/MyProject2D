@@ -10,11 +10,12 @@ public class GameManager : MonoBehaviour
    
     public float levelStartDelay = 2f;
     public float turnDelay = 0.1f;
-    public int playerHealth = 100;
+    public int playerHealth = 80;
     public int playerMaxHealth = 100;
     public int playerScore = 0;
     public static GameManager instance = null;
     [HideInInspector] public bool playersTurn = true;
+
 
     private Text levelText;
     private GameObject levelImage;

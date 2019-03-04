@@ -15,6 +15,8 @@ public class Player : MovingObject
     public AudioClip moveSound2;
     public AudioClip attackSource;
     public Text healthText;
+    public Text maxText;
+    public Slider slider;
 
     private Animator animator;
     private SpriteRenderer spriterenderer;
@@ -45,7 +47,9 @@ public class Player : MovingObject
         health = GameManager.instance.playerHealth;
         score = GameManager.instance.playerScore;
 
-        healthText.text = "Health: " + health;
+        slider.value = health;
+        healthText.text = health.ToString();
+        maxText.text = "/ " + maxHealth.ToString();
 
         base.Start();
         isAttacking = false;
@@ -95,6 +99,7 @@ public class Player : MovingObject
             StartCoroutine(Attack(attack, attackDelay));
         }
        
+        
     }
     
     
@@ -111,7 +116,12 @@ public class Player : MovingObject
         if (collision.tag == "Potion")
         {
             if (health < maxHealth)
-            health += pointsPerPotion;
+            {
+                if (maxHealth - health < pointsPerPotion)
+                    health = maxHealth;
+                else
+                    health += pointsPerPotion;
+            }
             collision.gameObject.SetActive(false);
         }
 
@@ -122,7 +132,8 @@ public class Player : MovingObject
             enabled = false;
         }
 
-
+        healthText.text = health.ToString();
+        slider.value = health;
     }
 
    void GetAxes()
